@@ -267,6 +267,16 @@ local function rebuildFilterUI()
     end
     filterButtonObjects = {}
 
+    -- Sort filter list by quantity (least at top, most at bottom)
+    table.sort(filterInsertionOrder, function(a, b)
+        local countA = eggCounts[a] or 0
+        local countB = eggCounts[b] or 0
+        if countA == countB then
+            return a < b -- alphabetical fallback if counts are equal
+        end
+        return countA < countB
+    end)
+
     for index, eggName in ipairs(filterInsertionOrder) do
         local state = dynamicFilters[eggName]
         if state ~= nil then
@@ -356,7 +366,7 @@ renderConnection = RunService.RenderStepped:Connect(function()
                 local eggName = activeEgg.Name
                 if dynamicFilters[eggName] == nil then
                     dynamicFilters[eggName] = false
-                    table.insert(filterInsertionOrder, 1, eggName)
+                    table.insert(filterInsertionOrder, eggName)
                     foundNewEggName = true
                 end
 
@@ -381,16 +391,8 @@ renderConnection = RunService.RenderStepped:Connect(function()
         end
     end
 
-    if foundNewEggName or filterChanged then
-        rebuildFilterUI()
-    else
-        -- Dynamically update counts on existing buttons without rebuilding layout
-        for eggName, btn in pairs(filterButtonObjects) do
-            local state = dynamicFilters[eggName]
-            local count = eggCounts[eggName] or 0
-            btn.Text = string.format(" [%s] (%d) %s", state and "ON" or "OFF", count, eggName)
-        end
-    end
+    -- Periodically re-sort if quantities shift so the list stays ordered by count
+    rebuildFilterUI()
 
     table.sort(detectedEggs, function(a, b)
         return a.dist < b.dist
