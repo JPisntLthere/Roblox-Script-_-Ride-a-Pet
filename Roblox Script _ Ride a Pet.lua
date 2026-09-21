@@ -321,7 +321,7 @@ renderConnection = RunService.RenderStepped:Connect(function()
 
     local currentMapEggs = {}
     if RenderedEggs then
-        for _, activeEgg in ipairs(RenderedEggs:GetDescendants()) do
+        for _, activeEgg in ipairs(RenderedEggs:GetChildren()) do
             if activeEgg:IsA("BasePart") or activeEgg:IsA("Model") then
                 currentMapEggs[activeEgg.Name] = true
             end
@@ -342,7 +342,7 @@ renderConnection = RunService.RenderStepped:Connect(function()
     local foundNewEggName = false
 
     if RenderedEggs then
-        for _, activeEgg in ipairs(RenderedEggs:GetDescendants()) do
+        for _, activeEgg in ipairs(RenderedEggs:GetChildren()) do
             if activeEgg:IsA("BasePart") or activeEgg:IsA("Model") then
                 local eggName = activeEgg.Name
                 if dynamicFilters[eggName] == nil then
