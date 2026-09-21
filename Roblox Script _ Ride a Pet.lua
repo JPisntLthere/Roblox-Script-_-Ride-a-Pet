@@ -325,8 +325,10 @@ end
 
 -- #region 5. MAIN RENDER LOOP & EXECUTION
 local frameCounter = 0
+local sortTimer = 0
 local renderConnection
-renderConnection = RunService.RenderStepped:Connect(function()
+
+renderConnection = RunService.RenderStepped:Connect(function(dt)
     frameCounter = (frameCounter + 1) % 2
     if frameCounter ~= 0 then return end
 
@@ -402,11 +404,21 @@ renderConnection = RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Only fully rebuild UI if new eggs appear or disappear; otherwise just smoothly update counts/order
+    -- Throttle sorting and heavy UI reorders to once every ~30 frames (approx. every 0.5s) to prevent lag spikes
+    sortTimer = sortTimer + 1
     if foundNewEggName or filterChanged then
         rebuildFilterUI()
-    else
+        sortTimer = 0
+    elseif sortTimer >= 30 then
         updateFilterOrderAndCounts()
+        sortTimer = 0
+    else
+        -- Fast lightweight count updates on existing buttons without shifting layout every frame
+        for eggName, btn in pairs(filterButtonObjects) do
+            local state = dynamicFilters[eggName]
+            local count = eggCounts[eggName] or 0
+            btn.Text = string.format(" [%s] (%d) %s", state and "ON" or "OFF", count, eggName)
+        end
     end
 
     table.sort(detectedEggs, function(a, b)
