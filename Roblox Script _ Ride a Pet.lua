@@ -1,5 +1,5 @@
 -- ============================================================================
--- EGG RADAR V2 (Deep Scanning & Safe Execution)
+-- EGG RADAR V2 + INFINITE JUMP
 -- ============================================================================
 
 -- #region 1. SERVICES & INITIAL VARIABLES
@@ -38,8 +38,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 480, 0, 205)
-mainFrame.Position = UDim2.new(1, -500, 0.5, -102)
+mainFrame.Size = UDim2.new(0, 480, 0, 235)
+mainFrame.Position = UDim2.new(1, -500, 0.5, -117)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 35)
 mainFrame.BackgroundTransparency = 0.1
 mainFrame.BorderSizePixel = 2
@@ -54,7 +54,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -40, 0, 30)
 titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Egg Radar V2"
+titleLabel.Text = "Egg Radar V2 + Inf Jump"
 titleLabel.TextColor3 = Color3.fromRGB(235, 180, 255)
 titleLabel.TextSize, titleLabel.Font = 15, Enum.Font.SourceSansBold
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -112,7 +112,7 @@ container.BackgroundTransparency = 1
 container.Parent = mainFrame
 
 local filterFrame = Instance.new("ScrollingFrame")
-filterFrame.Size = UDim2.new(0, 145, 0, 146)
+filterFrame.Size = UDim2.new(0, 145, 0, 176)
 filterFrame.Position = UDim2.new(0, 5, 0, 0)
 filterFrame.BackgroundTransparency = 0.2
 filterFrame.BackgroundColor3 = Color3.fromRGB(35, 20, 50)
@@ -165,7 +165,7 @@ farthestCorner.Parent = farthestLabel
 
 local distLabel = Instance.new("TextLabel")
 distLabel.Size = UDim2.new(1, 0, 0, 18)
-distLabel.Position = UDim2.new(0, 0, 1, -48)
+distLabel.Position = UDim2.new(0, 0, 1, -74)
 distLabel.BackgroundTransparency = 1
 distLabel.Text = "Max Distance: 10000 studs"
 distLabel.TextColor3 = Color3.fromRGB(220, 180, 240)
@@ -175,7 +175,7 @@ distLabel.Parent = rightContainer
 
 local sliderBar = Instance.new("Frame")
 sliderBar.Size = UDim2.new(1, 0, 0, 8)
-sliderBar.Position = UDim2.new(0, 0, 1, -28)
+sliderBar.Position = UDim2.new(0, 0, 1, -54)
 sliderBar.BackgroundColor3 = Color3.fromRGB(50, 25, 75)
 sliderBar.BorderSizePixel = 0
 sliderBar.Parent = rightContainer
@@ -195,6 +195,41 @@ local fillCorner = Instance.new("UICorner")
 fillCorner.CornerRadius = UDim.new(1, 0)
 fillCorner.Parent = sliderFill
 
+-- Infinite Jump Toggle Button
+local infJumpEnabled = false
+local infJumpBtn = Instance.new("TextButton")
+infJumpBtn.Size = UDim2.new(1, 0, 0, 24)
+infJumpBtn.Position = UDim2.new(0, 0, 1, -26)
+infJumpBtn.BackgroundColor3 = Color3.fromRGB(45, 20, 65)
+infJumpBtn.TextColor3 = Color3.fromRGB(150, 110, 180)
+infJumpBtn.TextSize, infJumpBtn.Font = 11, Enum.Font.SourceSansBold
+infJumpBtn.Text = " Inf Jump: [OFF]"
+infJumpBtn.TextXAlignment = Enum.TextXAlignment.Left
+infJumpBtn.Parent = rightContainer
+
+local infCorner = Instance.new("UICorner")
+infCorner.CornerRadius = UDim.new(0, 4)
+infCorner.Parent = infJumpBtn
+
+infJumpBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    infJumpBtn.BackgroundColor3 = infJumpEnabled and Color3.fromRGB(80, 30, 120) or Color3.fromRGB(45, 20, 65)
+    infJumpBtn.TextColor3 = infJumpEnabled and Color3.fromRGB(245, 200, 255) or Color3.fromRGB(150, 110, 180)
+    infJumpBtn.Text = string.format(" Inf Jump: [%s]", infJumpEnabled and "ON" or "OFF")
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local character = LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
+
 local minimized = false
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -203,7 +238,7 @@ minimizeButton.MouseButton1Click:Connect(function()
         mainFrame.Size = UDim2.new(0, 480, 0, 35)
         minimizeButton.Text = "+"
     else
-        mainFrame.Size = UDim2.new(0, 480, 0, 205)
+        mainFrame.Size = UDim2.new(0, 480, 0, 235)
         minimizeButton.Text = "-"
     end
 end)
@@ -404,7 +439,6 @@ renderConnection = RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- Throttle sorting and heavy UI reorders to once every ~30 frames (approx. every 0.5s) to prevent lag spikes
     sortTimer = sortTimer + 1
     if foundNewEggName or filterChanged then
         rebuildFilterUI()
@@ -413,7 +447,6 @@ renderConnection = RunService.RenderStepped:Connect(function(dt)
         updateFilterOrderAndCounts()
         sortTimer = 0
     else
-        -- Fast lightweight count updates on existing buttons without shifting layout every frame
         for eggName, btn in pairs(filterButtonObjects) do
             local state = dynamicFilters[eggName]
             local count = eggCounts[eggName] or 0
@@ -462,5 +495,5 @@ screenGui.Destroying:Connect(function()
     end
 end)
 
-print("Egg Radar V2 Deep Scan Loaded!")
+print("Egg Radar V2 + Inf Jump Loaded!")
 -- #endregion
