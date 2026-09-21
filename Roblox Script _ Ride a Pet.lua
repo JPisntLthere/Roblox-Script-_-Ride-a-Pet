@@ -259,6 +259,7 @@ local function hideAllLines()
 end
 
 local filterButtonObjects = {}
+local eggCounts = {}
 
 local function rebuildFilterUI()
     for _, btn in pairs(filterButtonObjects) do
@@ -269,12 +270,13 @@ local function rebuildFilterUI()
     for index, eggName in ipairs(filterInsertionOrder) do
         local state = dynamicFilters[eggName]
         if state ~= nil then
+            local count = eggCounts[eggName] or 0
             local filterBtn = Instance.new("TextButton")
             filterBtn.Size = UDim2.new(1, 0, 0, 25)
             filterBtn.BackgroundColor3 = state and Color3.fromRGB(80, 30, 120) or Color3.fromRGB(45, 20, 65)
             filterBtn.TextColor3 = state and Color3.fromRGB(245, 200, 255) or Color3.fromRGB(150, 110, 180)
             filterBtn.TextSize, filterBtn.Font = 11, Enum.Font.SourceSansBold
-            filterBtn.Text = string.format(" [%s] %s", state and "ON" or "OFF", eggName)
+            filterBtn.Text = string.format(" [%s] (%d) %s", state and "ON" or "OFF", count, eggName)
             filterBtn.TextXAlignment = Enum.TextXAlignment.Left
             filterBtn.LayoutOrder = index
             filterBtn.Parent = filterFrame
@@ -286,9 +288,10 @@ local function rebuildFilterUI()
             filterBtn.MouseButton1Click:Connect(function()
                 dynamicFilters[eggName] = not dynamicFilters[eggName]
                 local newState = dynamicFilters[eggName]
+                local currentCount = eggCounts[eggName] or 0
                 filterBtn.BackgroundColor3 = newState and Color3.fromRGB(80, 30, 120) or Color3.fromRGB(45, 20, 65)
                 filterBtn.TextColor3 = newState and Color3.fromRGB(245, 200, 255) or Color3.fromRGB(150, 110, 180)
-                filterBtn.Text = string.format(" [%s] %s", newState and "ON" or "OFF", eggName)
+                filterBtn.Text = string.format(" [%s] (%d) %s", newState and "ON" or "OFF", currentCount, eggName)
             end)
 
             filterButtonObjects[eggName] = filterBtn
@@ -320,13 +323,19 @@ renderConnection = RunService.RenderStepped:Connect(function()
     local playerPos = rootPart.Position
 
     local currentMapEggs = {}
+    local newEggCounts = {}
+
     if RenderedEggs then
         for _, activeEgg in ipairs(RenderedEggs:GetChildren()) do
             if activeEgg:IsA("BasePart") or activeEgg:IsA("Model") then
-                currentMapEggs[activeEgg.Name] = true
+                local eggName = activeEgg.Name
+                currentMapEggs[eggName] = true
+                newEggCounts[eggName] = (newEggCounts[eggName] or 0) + 1
             end
         end
     end
+
+    eggCounts = newEggCounts
 
     local filterChanged = false
     for i = #filterInsertionOrder, 1, -1 do
@@ -374,6 +383,13 @@ renderConnection = RunService.RenderStepped:Connect(function()
 
     if foundNewEggName or filterChanged then
         rebuildFilterUI()
+    else
+        -- Dynamically update counts on existing buttons without rebuilding layout
+        for eggName, btn in pairs(filterButtonObjects) do
+            local state = dynamicFilters[eggName]
+            local count = eggCounts[eggName] or 0
+            btn.Text = string.format(" [%s] (%d) %s", state and "ON" or "OFF", count, eggName)
+        end
     end
 
     table.sort(detectedEggs, function(a, b)
